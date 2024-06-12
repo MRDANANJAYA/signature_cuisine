@@ -13,6 +13,7 @@ import { LoginProvider } from "./context/LoginContext";
 import Login from "./pages/login";
 import { CartProvider } from "./context/CartContext";
 import Orders from "./pages/orders";
+import CartScreen from "./pages/cartscreen";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
@@ -39,6 +40,11 @@ const router = createBrowserRouter([
   },{
     path: "orders",
     element: <Orders />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: "cartscreen",
+    element: <CartScreen />,
     errorElement: <ErrorPage />,
   },
 ]);

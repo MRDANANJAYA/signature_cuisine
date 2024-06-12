@@ -108,11 +108,11 @@ const CommonHeader = ({ Children }) => {
                 About
               </a>
             </li>
-            <li className="nav-item align-content-sm-center">
+            {isLogin&&<li className="nav-item align-content-sm-center">
               <a className="nav-link" href="#">
                 Categories
               </a>
-            </li>
+            </li>}
             <li className="nav-item align-content-sm-center">
               <a
                 className="nav-link"
@@ -127,7 +127,7 @@ const CommonHeader = ({ Children }) => {
               </a>
             </li>
             <li className="nav-item align-content-sm-center">
-              <IconButton aria-label="cart">
+              <IconButton aria-label="cart" onClick={(e)=> navigate('/cartscreen')}>
                 <StyledBadge badgeContent={itemsCount} color="secondary">
                   <ShoppingCartIcon />
                 </StyledBadge>

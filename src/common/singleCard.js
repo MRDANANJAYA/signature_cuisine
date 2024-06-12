@@ -1,5 +1,4 @@
-import { Navigate, useNavigate } from "react-router-dom";
-import Button from "react-bootstrap/Button";
+import { useNavigate } from "react-router-dom";
 import '../css/singleCard.css'
 
 const SingleCard = ({ item ,isloding,onClick}) => {
@@ -7,8 +6,8 @@ const SingleCard = ({ item ,isloding,onClick}) => {
   return (
     <div className="col" onClick={onClick}>
       <div
-        className="card h-100 "
-        style={{ maxWidth: "840px" }}
+        className="card h-100 cardonly"
+        style={{ maxWidth: "840px",boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.01), 0 6px 20px 0 rgba(0, 0, 0, 0.1)' }}
       >
         <div className="row g-0 h-100">
           <div className="col-md-4">

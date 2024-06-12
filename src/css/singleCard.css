@@ -1,7 +1,4 @@
-.card:hover{
+.cardonly:hover{
     background-color: gainsboro;
     cursor: pointer; 
-}
-.img-div{
-    height: 100%;
 }
