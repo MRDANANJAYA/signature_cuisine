@@ -14,6 +14,8 @@ import Login from "./pages/login";
 import { CartProvider } from "./context/CartContext";
 import Orders from "./pages/orders";
 import CartScreen from "./pages/cartscreen";
+import StaffDashboad from "./pages/staff/staff_dashboard";
+import StaffSingleService from "./pages/staff/staff_singleService";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
@@ -45,6 +47,16 @@ const router = createBrowserRouter([
   {
     path: "cartscreen",
     element: <CartScreen />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: "staff_dashboard",
+    element: <StaffDashboad />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: "/dashboard/staff_Service-item",
+    element: <StaffSingleService />,
     errorElement: <ErrorPage />,
   },
 ]);

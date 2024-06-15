@@ -31,6 +31,7 @@ const Dashboard = () => {
       if (user) {
         const userid = user.uid;
         console.log("getAuth", userid);
+        getUserRole(userid)
         getServices(db);
         getCartData(userid);
       } else {
@@ -82,6 +83,35 @@ const Dashboard = () => {
   useEffect(() => {
     getUser();
   }, []);
+
+
+  async function getUserRole(id){
+    const docRef = doc(db, "auth", `${id}`);
+    try {
+      const documentSnapshot = await getDoc(docRef);
+      if (documentSnapshot.exists()) {
+        const documentData = documentSnapshot.data();
+        console.log("Auth role data:", documentData.role);
+        if(documentData.role === 'staff'){
+          
+          navigate("/staff_dashboard");
+        }else if(documentData.role === 'admin'){
+
+        }else{
+          
+          navigate("/dashboard");
+        }
+
+      } else {
+        console.log("Document not found.");
+      }
+    } catch (error) {
+      console.error("Error fetching document:", error);
+    }
+    
+
+    setIsloding(false);
+  }
 
   return (
     <div>

@@ -4,7 +4,7 @@ import { LoginContext } from "../context/LoginContext";
 import { useContext, useState } from "react";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { initializeFirebase } from "../database/firebaseConfig";
-import { getFirestore } from "firebase/firestore";
+import { collection, doc, getDoc, getFirestore } from "firebase/firestore";
 const Login = () => {
   const navigate = useNavigate();
   const { setLogin } = useContext(LoginContext);
@@ -27,10 +27,8 @@ const Login = () => {
           const user = userCredential.user;
           // ...
           console.log("userCredential", user);
-          localStorage.setItem("islogin", "true");
-          setLogin(true);
-          navigate("/dashboard");
-          setIsloding(false);
+          getUserRole(user.uid)
+         // setIsloding(false);
         })
         .catch((error) => {
           setIsloding(false);
@@ -47,6 +45,37 @@ const Login = () => {
         });
     }
   };
+
+  async function getUserRole(id){
+    const docRef = doc(db, "auth", `${id}`);
+    try {
+      const documentSnapshot = await getDoc(docRef);
+      if (documentSnapshot.exists()) {
+        const documentData = documentSnapshot.data();
+        console.log("Auth role data:", documentData.role);
+        if(documentData.role === 'staff'){
+          localStorage.setItem("islogin", "true");
+          setLogin(true);
+          navigate("/staff_dashboard");
+        }else if(documentData.role === 'admin'){
+
+        }else{
+          
+          localStorage.setItem("islogin", "true");
+          setLogin(true);
+          navigate("/dashboard");
+        }
+
+      } else {
+        console.log("Document not found.");
+      }
+    } catch (error) {
+      console.error("Error fetching document:", error);
+    }
+    
+
+    setIsloding(false);
+  }
 
   return (
     <div className="d-flex justify-content-center" style={{ height: "100vh" }}>
