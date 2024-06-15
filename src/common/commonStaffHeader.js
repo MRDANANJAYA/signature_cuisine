@@ -20,7 +20,7 @@ import { initializeFirebase } from "../database/firebaseConfig";
 import { doc, getDoc, getFirestore } from "firebase/firestore";
 import { CartContext } from "../context/CartContext";
 
-const CommonStaffHeader = ({ Children }) => {
+const CommonStaffHeader = ({ Children, img , name }) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const { isLogin, setLogin } = useContext(LoginContext);
@@ -103,7 +103,7 @@ const CommonStaffHeader = ({ Children }) => {
               </a>
             </li>
             {isLogin&&<li className="nav-item align-content-sm-center">
-              <a className="nav-link" href="#">
+              <a className="nav-link" href="/dashboard/Staff_Catagory">
                 Categories
               </a>
             </li>}
@@ -122,10 +122,11 @@ const CommonStaffHeader = ({ Children }) => {
             </li>
            
             <li className="nav-item align-content-sm-center  ps-3">
-              <IconButton onClick={handleClick} sx={{ p: 0 }}>
+              <IconButton onClick={handleClick} sx={{ p: 0 }} data-bs-toggle="tooltip" data-bs-placement="bottom" title={name?name:"Signature cuisine"}>
                 <Avatar
-                  alt="Signature cuisine"
-                  src="/static/images/avatar/2.jpg"
+                sx={{border:'solid'}}
+                  alt= {name?name:"Signature cuisine"}
+                  src= {img ? img :"/static/images/avatar/2.jpg"}
                   variant="rounded"
                 />
               </IconButton>

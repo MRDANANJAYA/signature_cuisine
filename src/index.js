@@ -16,6 +16,7 @@ import Orders from "./pages/orders";
 import CartScreen from "./pages/cartscreen";
 import StaffDashboad from "./pages/staff/staff_dashboard";
 import StaffSingleService from "./pages/staff/staff_singleService";
+import StaffCatagory from "./pages/staff/staff_catagory";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
@@ -57,6 +58,11 @@ const router = createBrowserRouter([
   {
     path: "/dashboard/staff_Service-item",
     element: <StaffSingleService />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: "/dashboard/Staff_Catagory",
+    element: <StaffCatagory />,
     errorElement: <ErrorPage />,
   },
 ]);

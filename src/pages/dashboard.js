@@ -118,7 +118,7 @@ const Dashboard = () => {
       <CommonHeader />
       <div className="px-5" style={{ flexDirection: "column" }}>
         {isloding === true && <Loader />}
-        <div className="row row-cols-1 row-cols-md-2 mt-3">
+        <div className="row row-cols-1 row-cols-md-2 mt-3 g-3">
           {servicesList &&
             servicesList.map((singleItem) => (
               <SingleCard

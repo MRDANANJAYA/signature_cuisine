@@ -1,57 +1,47 @@
-import { useNavigate, useLocation } from "react-router-dom";
-
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import AddCircleOutlineRoundedIcon from "@mui/icons-material/AddCircleOutlineRounded";
+import CommonStaffHeader from "../../common/commonStaffHeader";
 import {
-  getFirestore,
+  collection,
+  deleteDoc,
   doc,
   getDoc,
+  getDocs,
+  getFirestore,
   setDoc,
   updateDoc,
-  collection,
 } from "firebase/firestore";
-import { useContext, useEffect, useState } from "react";
-import AddCircleOutlineRoundedIcon from "@mui/icons-material/AddCircleOutlineRounded";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { Modal } from "bootstrap";
-import CommonStaffHeader from "../../common/commonStaffHeader";
-import Loader from "../../common/loader";
 import { initializeFirebase } from "../../database/firebaseConfig";
-import { LoginContext } from "../../context/LoginContext";
-// [START storage_upload_ref_modular]
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import Loader from "../../common/loader";
 import {
   getDownloadURL,
   getStorage,
   ref,
   uploadBytesResumable,
 } from "firebase/storage";
+import { Modal } from "bootstrap";
 import keyGenarate from "../../util/keyGenarate";
-const StaffSingleService = () => {
+
+const StaffCatagory = () => {
   const navigate = useNavigate();
   const app = initializeFirebase();
   const db = getFirestore(app);
-  const [dataList, setDataList] = useState(null);
-
-  const [modalData, setmodalData] = useState({
-    name: "",
-    img: "",
-    price: 0,
-    id: "",
-    itemCheck: false,
-    disc: "",
-  });
-
+  const auth = getAuth(app);
+  const [userData, setUserData] = useState({ img: "", name: "" });
   const [isloding, setIsloding] = useState(false);
+  const [catList, setCatList] = useState(null);
   const [isImageupload, setImageupload] = useState(false);
   const [isFileupload, setFileupload] = useState(false);
-  const { state } = useLocation();
-  const { isLogin } = useContext(LoginContext);
-  const [dineIn, setDineIn] = useState([]);
-  //const [options, setOptions] = useState([]);
-  const [APITtitle, setAPITtitle] = useState("");
-  const [APItext, setAPItext] = useState("");
-  const [image, setImage] = useState(null);
-  // Initialize Firebase Authentication and get a reference to the service
-  const auth = getAuth(app);
- 
+  const [modalData, setmodalData] = useState({
+    title: "",
+    img: "",
+    updated: "",
+    id: "",
+    availability: false,
+    subtitle: "",
+  });
   async function getUser() {
     let userid;
     try {
@@ -67,6 +57,8 @@ const StaffSingleService = () => {
 
       userid = user.uid;
       console.log("getAuth", userid);
+      getUserDetails(userid);
+      getCatagory();
     } catch (error) {
       console.error(error.message);
       navigate("/loginScreen");
@@ -74,123 +66,142 @@ const StaffSingleService = () => {
     return userid;
   }
 
-  useEffect(() => {
-    // Get a list of serviceItems from database
-    getUser();
-    getServices(db);
-  }, []);
-
-  async function getServices(db) {
-    setIsloding(true);
-    const docRef = doc(db, "serviceItems", `${state.id}`);
+  async function getUserDetails(userid) {
+    const docRef = doc(db, "auth", `${userid}`);
     try {
       const documentSnapshot = await getDoc(docRef);
       if (documentSnapshot.exists()) {
         const documentData = documentSnapshot.data();
-        setDataList(documentData.data);
-        const element = [];
-        for (let index = 0; index < documentData.data.length; index++) {
-          element.push("false");
-        }
-        setDineIn(element);
-        console.log("Document count:", element);
-        console.log("Document data:", documentData.data);
+        setUserData({
+          img: documentData.img,
+          name: `${documentData.fname} ${documentData.lname}`,
+        });
+        console.log(
+          "Document data:",
+          documentData.fname + " " + documentData.lname
+        );
       } else {
         console.log("Document not found.");
       }
     } catch (error) {
       console.error("Error fetching document:", error);
     }
+  }
+
+  async function uploadCatagory(list, catId) {
+    console.log("going to update Catagory", list);
+    setIsloding(true);
+
+    await setDoc(doc(db, "services", `${catId}`), list)
+      .then((value) => {
+        setIsloding(false);
+        console.log("Frank created", value);
+        alert("successful");
+        getCatagory();
+        document.querySelector(".btn-close").click();
+      })
+      .catch((error) => {
+        setIsloding(false);
+        alert("Error occurred" + error);
+      });
+  }
+
+  async function getCatagory() {
+    setIsloding(true);
+
+    const catCol = collection(db, "services");
+    try {
+      const catSnapshot = await getDocs(catCol);
+      const catList = catSnapshot.docs.map((doc) => doc.data());
+      setCatList(catList);
+      console.log("FIERBASE Catagory", catList);
+    } catch (error) {
+      console.error("Error fetching document:", error);
+    }
+
     setIsloding(false);
   }
 
+  useEffect(() => {
+    getUser();
+  }, []);
+
+  const addCatagory = (e) => {
+    let key = keyGenarate(25);
+    console.log("random key", key);
+    setmodalData({
+      title: "",
+      img: "",
+      updated: "",
+      id: key,
+      availability: false,
+      subtitle: "",
+    });
+
+    var myModal = new Modal(document.getElementById("staticBackdrop"));
+    myModal.show();
+    const form = document.getElementById("serviceForm"); // Replace with your form ID
+    form.reset();
+    const lable = document.getElementById("staticBackdropLabel");
+    const int = document.getElementById("hideText");
+    int.textContent = "index";
+
+    lable.innerHTML = "Add Catagory";
+  };
+
   const updateData = async (i) => {
-    let key = keyGenarate(7);
     let list = [];
 
+    var currentdate = new Date();
+    var datetime =
+      "Last Sync: " +
+      currentdate.getDate() +
+      "/" +
+      (currentdate.getMonth() + 1) +
+      "/" +
+      currentdate.getFullYear() +
+      " @ " +
+      currentdate.getHours() +
+      ":" +
+      currentdate.getMinutes() +
+      ":" +
+      currentdate.getSeconds();
+
     if (
-      modalData.disc === "" ||
+      modalData.subtitle === "" ||
       modalData.img === "" ||
-      modalData.price === "" ||
-      modalData.name === ""
+      modalData.title === ""
     ) {
       alert("feilds canot be empty");
     } else {
-      if(dataList){
-        dataList.forEach((element, index) => {
-          console.log("element", i === index, i, index, modalData.img);
-          if (i === index.toString()) {
-            list.push({
-              availability: modalData.itemCheck,
-              disc: modalData.disc,
-              id: element.id,
-              img: modalData.img,
-              price: Number.parseFloat(modalData.price),
-              title: modalData.name,
-            });
-          } else {
-            list.push(element);
-          }
-        });
-      }
-     
-
-      console.log("handleFile", list);
-     
-      if (i === "index") {
-        list.push({
-          availability: modalData.itemCheck,
-          disc: modalData.disc,
-          id: key,
-          img: modalData.img,
-          price: Number.parseFloat(modalData.price),
-          title: modalData.name,
-        });
-        try {
-          uploadOrder(list);
-        } catch (e) {
-          alert("internal error" + `${e}`);
-        }
-      } else {
-        try {
-          uploadOrder(list);
-        } catch (e) {
-          alert("internal error" + `${e}`);
-        }
+      try {
+        uploadCatagory(
+          {
+            title: modalData.title,
+            img: modalData.img,
+            updated: datetime,
+            id: modalData.id,
+            availability: modalData.availability,
+            subtitle: modalData.subtitle,
+          },
+          modalData.id
+        );
+      } catch (e) {
+        alert("internal error" + `${e}`);
       }
     }
   };
 
-  async function uploadOrder(list) {
-    console.log("uploadin", list);
-    setFileupload(true);
-    setIsloding(true);
-    await setDoc(doc(db, "serviceItems", `${state.id}`), {
-      // passing doc here
-      data: list,
-    })
-      .then((value) => {
-        setFileupload(false);
-        setIsloding(false);
-        console.log("Frank created", value);
-        alert("successful");
-        getServices(db);
-        document.querySelector(".btn-close").click();
-      })
-      .catch((error) => {
-        setFileupload(false);
-        setIsloding(false);
-        alert("Error occurred");
-      });
-  }
-
   const handleFile = (e) => {
     const file = e.target.files[0];
-    console.log("image Path", `images/${state.id}/${file.name}`);
+
     if (file) {
       setImageupload(true);
       const storage = getStorage(app);
-      const storageRef = ref(storage, `images/${state.id}/${file.name}`);
+      const storageRef = ref(
+        storage,
+        `images/catagory/${modalData.id}/${file.name}`
+      );
 
       // Upload the file and metadata
       const uploadTask = uploadBytesResumable(storageRef, file);
@@ -222,12 +233,12 @@ const StaffSingleService = () => {
           getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
             console.log("File available at", downloadURL);
             const data = {
-              name: modalData.name,
+              title: modalData.title,
               img: downloadURL,
-              id: "",
-              price: modalData.price,
-              itemCheck: modalData.itemCheck,
-              disc: modalData.disc,
+              updated: modalData.updated,
+              id: modalData.id,
+              availability: modalData.availability,
+              subtitle: modalData.subtitle,
             };
             setmodalData(data);
             console.log("handleFile", data);
@@ -238,28 +249,9 @@ const StaffSingleService = () => {
     }
   };
 
-  const addOrder = (e) => {
-    setmodalData({
-      name: "",
-      img: "",
-      price: 0,
-      id: "",
-      itemCheck: false,
-      disc: "",
-    });
-    var myModal = new Modal(document.getElementById("staticBackdrop"));
-    myModal.show();
-    const form = document.getElementById("serviceForm"); // Replace with your form ID
-    form.reset();
-    const lable = document.getElementById("staticBackdropLabel");
-    const int = document.getElementById("hideText");
-    int.textContent = "index";
-
-    lable.innerHTML = "Add order";
-  };
-
   return (
-    <div className="page" style={{ flexDirection: "column" }}>
+    <>
+      <CommonStaffHeader name={userData.name} img={userData.img} />
       <div
         class="modal fade"
         id="staticBackdrop"
@@ -273,7 +265,7 @@ const StaffSingleService = () => {
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title" id="staticBackdropLabel">
-                Edit order
+                Edit Catagory
               </h5>
               <h5 class="visually-hidden" id="hideText">
                 index
@@ -289,44 +281,21 @@ const StaffSingleService = () => {
               <form id="serviceForm">
                 <div class="form-group">
                   <label for="recipient-name" class="col-form-label">
-                    Item Name:
+                    Catagory Name:
                   </label>
                   <input
                     type="text"
                     class="form-control"
                     id="recipient-name"
-                    defaultValue={modalData.name}
+                    defaultValue={modalData.title}
                     onChange={(e) => {
                       const data = {
-                        name: e.target.value,
+                        title: e.target.value,
                         img: modalData.img,
-                        id: "",
-                        price: modalData.price,
-                        itemCheck: modalData.itemCheck,
-                        disc: modalData.disc,
-                      };
-                      setmodalData(data);
-                    }}
-                  />
-                </div>
-                <div class="form-group">
-                  <label for="recipient-name" class="col-form-label">
-                    Price:
-                  </label>
-
-                  <input
-                    type="number"
-                    class="form-control"
-                    id="recipient-price"
-                    defaultValue={modalData.price}
-                    onChange={(e) => {
-                      const data = {
-                        name: modalData.name,
-                        img: modalData.img,
-                        id: "",
-                        price: e.target.value,
-                        itemCheck: modalData.itemCheck,
-                        disc: modalData.disc,
+                        updated: modalData.updated,
+                        id: modalData.id,
+                        availability: modalData.availability,
+                        subtitle: modalData.subtitle,
                       };
                       setmodalData(data);
                     }}
@@ -339,15 +308,15 @@ const StaffSingleService = () => {
                   <textarea
                     class="form-control"
                     id="message-text"
-                    defaultValue={modalData.disc}
+                    defaultValue={modalData.subtitle}
                     onChange={(e) => {
                       const data = {
-                        name: modalData.name,
+                        title: modalData.title,
                         img: modalData.img,
-                        id: "",
-                        price: modalData.price,
-                        itemCheck: modalData.itemCheck,
-                        disc: e.target.value,
+                        updated: modalData.updated,
+                        id: modalData.id,
+                        availability: modalData.availability,
+                        subtitle: e.target.value,
                       };
                       setmodalData(data);
                     }}
@@ -382,15 +351,15 @@ const StaffSingleService = () => {
                     type="checkbox"
                     value=""
                     id="flexCheckChecked"
-                    defaultChecked={modalData.itemCheck}
+                    defaultChecked={modalData.availability}
                     onClick={(e) => {
                       const data = {
-                        name: modalData.name,
+                        title: modalData.title,
                         img: modalData.img,
-                        id: "",
-                        price: modalData.price,
-                        itemCheck: !modalData.itemCheck,
-                        disc: modalData.disc,
+                        updated: modalData.updated,
+                        id: modalData.id,
+                        availability: !modalData.availability,
+                        subtitle: modalData.subtitle,
                       };
                       setmodalData(data);
                     }}
@@ -428,12 +397,12 @@ const StaffSingleService = () => {
                   const form = document.getElementById("serviceForm"); // Replace with your form ID
                   form.reset(); // Resets all form fields, including the file input
                   setmodalData({
-                    name: "",
+                    title: "",
                     img: "",
-                    price: 0,
-                    itemCheck: false,
+                    updated: "",
                     id: "",
-                    disc: "",
+                    availability: false,
+                    subtitle: "",
                   });
                 }}
               >
@@ -443,19 +412,18 @@ const StaffSingleService = () => {
           </div>
         </div>
       </div>
-      <CommonStaffHeader />
       <center className="mb-3">
         <button
           type="button"
           className="btn btn-lg btn-block btn-success col-auto d-flex align-items-center"
-          onClick={addOrder}
+          onClick={addCatagory}
         >
           <AddCircleOutlineRoundedIcon className="me-2" />
-          Add New Order
+          Add New Catagory
         </button>
       </center>
-      {dataList &&
-        dataList.map((item, index) => (
+      {catList &&
+        catList.map((item, index) => (
           <div className="px-5 d-flex justify-content-center" key={item.id}>
             <div
               className="card mb-4 box-shadow text-center"
@@ -476,13 +444,7 @@ const StaffSingleService = () => {
                     ></img>
                   </div>
                   <div className="col my-auto ">
-                    <h1 className="card-title pricing-card-title">
-                      {item.price.toLocaleString("en-US", {
-                        style: "currency",
-                        currency: "LKR",
-                      })}
-                    </h1>
-                    <p className="list-unstyled mt-3 mb-4">{item.disc}</p>
+                    <p className="list-unstyled mt-3 mb-4">{item.subtitle}</p>
                   </div>
                 </div>
               </div>
@@ -501,36 +463,42 @@ const StaffSingleService = () => {
                     const form = document.getElementById("serviceForm"); // Replace with your form ID
                     form.reset();
                     const data = {
-                      name: item.title,
-                      price: item.price,
-                      itemCheck: item.availability,
-                      id: "",
-                      disc: item.disc,
+                      title: item.title,
                       img: item.img,
+                      updated: item.updated,
+                      id: item.id,
+                      availability: item.availability,
+                      subtitle: item.subtitle,
                     };
                     setmodalData(data);
                   }}
                 >
-                  Edit This Order
+                  Edit This catogory
                 </button>
                 <button
                   type="button"
                   className="btn btn-lg btn-block btn-danger col-auto ms-auto"
-                  onClick={(e) => {
-                    const newTodos = dataList.filter((item, i) => i !== index);
-                    console.log("todo", newTodos);
-                    uploadOrder(newTodos);
+                  onClick={async (e) => {
+                    try {
+                      await deleteDoc(doc(db, "services", item.id));
+                      getCatagory();
+                      console.log(
+                        "Entire Document has been deleted successfully."
+                      );
+                    } catch (ex) {
+                      console.log(ex);
+                    }
                   }}
                 >
-                  Delete This Order
+                  Delete This catogory
                 </button>
               </div>
             </div>
           </div>
         ))}
       {isloding === true && <Loader />}
-    </div>
+    </>
   );
 };
 
-export default StaffSingleService;
+export default StaffCatagory;
