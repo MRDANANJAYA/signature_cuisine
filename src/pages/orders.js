@@ -12,6 +12,7 @@ const Orders = () => {
   const auth = getAuth(app);
   const [orderData, setOrderData] = useState([]);
   const [isloding, setIsloding] = useState(false);
+  const [userData, setUserData] = useState({img : '', name: ''});
 
   const getCardData = async () => {
     onAuthStateChanged(auth, async (user) => {
@@ -19,12 +20,36 @@ const Orders = () => {
         const userid = user.uid;
         console.log("Orders Auth", userid);
         getOrderData(userid);
+        getUserDetails(userid)
       } else {
         // User is signed out
         console.log("User is signed out");
       }
     });
   };
+
+
+  async function getUserDetails(userid) {
+    const docRef = doc(db, "auth", `${userid}`);
+    try {
+      const documentSnapshot = await getDoc(docRef);
+      if (documentSnapshot.exists()) {
+        const documentData = documentSnapshot.data();
+        setUserData({
+          img: documentData.img,
+          name: `${documentData.fname} ${documentData.lname}`,
+        });
+        console.log(
+          "Document data:",
+          documentData.fname + " " + documentData.lname
+        );
+      } else {
+        console.log("Document not found.");
+      }
+    } catch (error) {
+      console.error("Error fetching document:", error);
+    }
+  }
 
   const getOrderData = async (userid) => {
     setIsloding(true);
@@ -49,9 +74,10 @@ const Orders = () => {
   }, []);
 
   return (
-    <div>
-      <CommonHeader />
+    <>
+      <CommonHeader img={userData.img} name={userData.name}/>
       {isloding === true && <Loader />}
+      <div className="px-5 d-flex justify-content-center g-5">
       {orderData &&
         orderData.map((data) => (
           <div className="card" style={{ width: "18rem" }} key={data.orderId}>
@@ -74,21 +100,18 @@ const Orders = () => {
             </div>
             <ul className="list-group list-group-flush">
               {data.items &&
-                data.items.map((items) => (
-                  <li className="list-group-item">{items.title}</li>
+                data.items.map((items,index) => (
+                  <li className="list-group-item" key={index}>{items.title}</li>
                 ))}
             </ul>
             <div className="card-body">
-              <a href="#" className="card-link">
-                Card link
-              </a>
-              <a href="#" className="card-link">
-                Another link
-              </a>
+              <span>Table No : <b>{data.tableId}</b></span>
             </div>
           </div>
         ))}
-    </div>
+      </div>
+      
+    </>
   );
 };
 

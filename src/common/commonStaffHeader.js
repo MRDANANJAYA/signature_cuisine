@@ -110,11 +110,11 @@ const CommonStaffHeader = ({ Children, img , name }) => {
             <li className="nav-item align-content-sm-center">
               <a
                 className="nav-link"
-                href="/Orders"
+                href="/dashboard/Staff_Orders"
                 onClick={(e) => {
                   e.preventDefault();
                   setItemsCount(itemsCount);
-                  navigate("/Orders");
+                  navigate("/dashboard/Staff_Orders");
                 }}
               >
                 Orders

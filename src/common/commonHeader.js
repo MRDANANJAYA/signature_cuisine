@@ -20,7 +20,7 @@ import { initializeFirebase } from "../database/firebaseConfig";
 import { doc, getDoc, getFirestore } from "firebase/firestore";
 import { CartContext } from "../context/CartContext";
 
-const CommonHeader = ({ Children }) => {
+const CommonHeader = ({ Children , img , name }) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const { isLogin, setLogin } = useContext(LoginContext);
@@ -108,12 +108,8 @@ const CommonHeader = ({ Children }) => {
                 About
               </a>
             </li>
-            {isLogin&&<li className="nav-item align-content-sm-center">
-              <a className="nav-link" href="#">
-                Categories
-              </a>
-            </li>}
-            <li className="nav-item align-content-sm-center">
+            
+           {isLogin&& <li className="nav-item align-content-sm-center">
               <a
                 className="nav-link"
                 href="/Orders"
@@ -125,7 +121,7 @@ const CommonHeader = ({ Children }) => {
               >
                 Orders
               </a>
-            </li>
+            </li>}
             <li className="nav-item align-content-sm-center">
               <IconButton aria-label="cart" onClick={(e)=> navigate('/cartscreen')}>
                 <StyledBadge badgeContent={itemsCount} color="secondary">
@@ -135,10 +131,11 @@ const CommonHeader = ({ Children }) => {
             </li>
 
             <li className="nav-item align-content-sm-center  ps-3">
-              <IconButton onClick={handleClick} sx={{ p: 0 }}>
+            <IconButton onClick={handleClick} sx={{ p: 0 }} data-bs-toggle="tooltip" data-bs-placement="bottom" title={name?name:"Signature cuisine"}>
                 <Avatar
-                  alt="Signature cuisine"
-                  src="/static/images/avatar/2.jpg"
+                sx={{border:'solid'}}
+                  alt= {name?name:"Signature cuisine"}
+                  src= {img ? img :"/static/images/avatar/2.jpg"}
                   variant="rounded"
                 />
               </IconButton>

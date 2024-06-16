@@ -1,12 +1,19 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import Loader from "./../common/loader";
 import { initializeFirebase } from "./../database/firebaseConfig";
-import { getFirestore, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
 import { useContext, useEffect, useState } from "react";
 import CommonHeader from "../common/commonHeader";
 import { LoginContext } from "../context/LoginContext";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { Modal } from 'bootstrap'
+import { Modal } from "bootstrap";
+import { CartContext } from "../context/CartContext";
 
 const SingleService = () => {
   const navigate = useNavigate();
@@ -14,53 +21,103 @@ const SingleService = () => {
   const db = getFirestore(app);
   const [dataList, setDataList] = useState(null);
   const [isloding, setIsloding] = useState(false);
+  const [isOrderloding, setOrderloding] = useState(false);
   const { state } = useLocation();
   const { isLogin } = useContext(LoginContext);
   const [dineIn, setDineIn] = useState([]);
+  const { setItemsCount } = useContext(CartContext);
   //const [options, setOptions] = useState([]);
-  const [APITtitle, setAPITtitle] = useState('');
-  const [APItext, setAPItext] = useState('');
-  
+  const [APITtitle, setAPITtitle] = useState("");
+  const [APItext, setAPItext] = useState("");
+  const [userData, setUserData] = useState({ img: "", name: "" });
+
   // Initialize Firebase Authentication and get a reference to the service
   const auth = getAuth(app);
-  const handleOrder = async (item,index) => {
+
+  async function getUserDetails(userid) {
+    const docRef = doc(db, "auth", `${userid}`);
+    try {
+      const documentSnapshot = await getDoc(docRef);
+      if (documentSnapshot.exists()) {
+        const documentData = documentSnapshot.data();
+        setUserData({
+          img: documentData.img,
+          name: `${documentData.fname} ${documentData.lname}`,
+        });
+        console.log(
+          "Document data:",
+          documentData.fname + " " + documentData.lname
+        );
+      } else {
+        console.log("Document not found.");
+      }
+    } catch (error) {
+      console.error("Error fetching document:", error);
+    }
+  }
+
+  const handleOrder = async (item, index) => {
+    setOrderloding(true);
     let authKey = await getUser();
     const cartDocRef = doc(db, "cart", `${authKey}`);
     const documentSnapshot = await getDoc(cartDocRef);
-    
+
     let r = (Math.random() + 1).toString(36).substring(7);
     if (documentSnapshot.exists()) {
       const documentData = documentSnapshot.data();
       var list = [];
-      if(documentData.data){
+      if (documentData.data) {
         list = documentData.data;
-      }      
+      }
       list.push({
         id: item.id,
         img: item.img,
         price: item.price,
         title: item.title,
-        quantity : 5,
-        tableNo : dineIn[index] === true ? 'Table 3' : 'N/A',
-        dineIn :dineIn[index] ? true :false
+        quantity: 1,
+        dineIn: dineIn[index] ? true : false,
       });
       await updateDoc(doc(db, "cart", `${authKey}`), {
         // passing doc here
         data: list,
-      }).then(value => {
-        console.log("Frank created", value);
+      })
+        .then((value) => {
+          setOrderloding(false);
+          console.log("Frank created", value);
+          getCartData(authKey);
+          var myModal = new Modal(document.getElementById("staticBackdrop"));
+          setAPItext("Item add to cart sucessfully");
+          setAPITtitle("Sucessfull");
+          myModal.show();
+        })
+        .catch((error) => {
+          setOrderloding(false);
+          var myModal = new Modal(document.getElementById("staticBackdrop"));
+          setAPItext(error);
+          setAPITtitle("Error");
+          myModal.show();
+        });
+    }
+    setOrderloding(false);
+  };
 
-        var myModal = new Modal(document.getElementById('staticBackdrop'))
-        setAPItext('Item add to cart sucessfully');
-        setAPITtitle('Sucessfull')
-        myModal.show();
-      }).catch(error =>{
-        var myModal = new Modal(document.getElementById('staticBackdrop'))
-        setAPItext(error);
-        setAPITtitle('Error')
-        myModal.show();
-        
-      });
+  // Get cart items count
+  const getCartData = async (userid) => {
+    console.log("CommonHeader Auth", userid);
+    const cartDocRef = doc(db, "cart", `${userid}`);
+    try {
+      const documentSnapshot = await getDoc(cartDocRef);
+      if (documentSnapshot.exists()) {
+        const documentData = documentSnapshot.data();
+
+        setItemsCount(documentData.data.length);
+
+        console.log("Cart data:", documentData.data);
+      } else {
+        console.log("Document not found.");
+      }
+    } catch (error) {
+      console.error("Error fetching document:", error);
     }
   };
 
@@ -79,11 +136,34 @@ const SingleService = () => {
 
       userid = user.uid;
       console.log("getAuth", userid);
+      getUserDetails(userid);
     } catch (error) {
       console.error(error.message);
       navigate("/loginScreen");
     }
     return userid;
+  }
+
+  async function getUserDetails(userid) {
+    const docRef = doc(db, "auth", `${userid}`);
+    try {
+      const documentSnapshot = await getDoc(docRef);
+      if (documentSnapshot.exists()) {
+        const documentData = documentSnapshot.data();
+        setUserData({
+          img: documentData.img,
+          name: `${documentData.fname} ${documentData.lname}`,
+        });
+        console.log(
+          "Document data:",
+          documentData.fname + " " + documentData.lname
+        );
+      } else {
+        console.log("Document not found.");
+      }
+    } catch (error) {
+      console.error("Error fetching document:", error);
+    }
   }
 
   useEffect(() => {
@@ -111,7 +191,7 @@ const SingleService = () => {
       }
       setIsloding(false);
     }
-
+    getUser()
     getServices(db);
   }, []);
 
@@ -153,7 +233,7 @@ const SingleService = () => {
           </div>
         </div>
       </div>
-      <CommonHeader />
+      <CommonHeader img={userData.img} name={userData.name} />
       {dataList &&
         dataList.map((item, index) => (
           <div className="px-5 d-flex justify-content-center" key={item.id}>
@@ -194,7 +274,10 @@ const SingleService = () => {
                             let newArr = [...dineIn];
                             newArr[index] = event.currentTarget.checked;
                             setDineIn(newArr);
-                            console.log('checkbox',event.currentTarget.checked)
+                            console.log(
+                              "checkbox",
+                              event.currentTarget.checked
+                            );
                           }}
                         />
                         <label class="form-check-label" for={item.id}>
@@ -204,8 +287,14 @@ const SingleService = () => {
                       <button
                         type="button"
                         className="btn btn-lg btn-block btn-primary col-auto ms-auto"
-                        onClick={(e)=>handleOrder(dataList[index],index)}
+                        onClick={(e) => handleOrder(dataList[index], index)}
                       >
+                        {isOrderloding && (
+                          <span
+                            className="spinner-border spinner-border-sm me-2"
+                            aria-hidden="true"
+                          />
+                        )}
                         Order Now
                       </button>
                     </div>
